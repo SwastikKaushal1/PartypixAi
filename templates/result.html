@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Matches</title>
+</head>
+<body>
+  <h1>Photos Found</h1>
+  {% if matches %}
+    {% for match in matches %}
+      <img src="/matches/{{ match }}" style="width:200px; margin:10px;">
+    {% endfor %}
+  {% else %}
+    <p>No matching photos found.</p>
+  {% endif %}
+</body>
+</html>
