@@ -1,25 +1,19 @@
 @echo off
-cd /d "C:\Users\richa\Desktop\Weeding project"
+cd /d %~dp0
 
-echo Initializing Git...
-git init
+REM Set Git Username and Email (If not already set)
+git config --global user.name "SwastikKaushal"
+git config --global user.email "swastikkaushal2022008@gmail.com"
 
-echo Adding files...
+echo Adding all files...
 git add .
 
-set /p msg="Enter commit message: "
-git commit -m "%msg%"
-
-echo Adding remote (if not already added)...
-git remote add origin https://github.com/SwastikKaushal1/PartypixAi.git 2>nul
-
-echo Setting branch to main...
-git branch -M main
-
-echo Pulling from remote to avoid conflicts...
-git pull origin main --allow-unrelated-histories
+echo Committing changes...
+set /p commit_msg="Enter commit message: "
+git commit -m "%commit_msg%"
 
 echo Pushing to GitHub...
-git push -u origin main
+git push origin main
 
-pause
+echo All done! Press any key to exit...
+pause >nul
