@@ -28,7 +28,7 @@
   
   .logo {
     font-size: 1.8em;
-    font-weight: bold;
+    font-weight: bold;  
     color: #d47aff;
     transition: transform 0.3s ease, text-shadow 0.3s ease;
     cursor: pointer;

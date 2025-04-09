@@ -5,6 +5,7 @@ import uuid
 import shutil
 import requests
 import csv
+import json
 
 app = Flask(__name__)
 app.secret_key = "super_secure_party_pix_secret_2024" # Required for flashing messages
@@ -19,6 +20,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(MATCH_FOLDER, exist_ok=True)
 
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1359406881914884147/jkynHq0DsAZA__f7IqqtRU9w1IrzU1R-8v1pzis9cZcY5D0G-P6yUonDgePUdqkwMylh"
+
 
 @app.route('/')
 def home():
@@ -35,8 +37,31 @@ def userlogged():
     if 'user' not in session:
         flash("Please log in first.", "warning")
         return redirect(url_for('home') + '#loginModal')
-    session.pop('_flashes', None) 
-    return render_template('user.html')
+
+    email = session['user']
+    filepath = 'user_data.csv'
+
+    # Create CSV if it doesn't exist
+    if not os.path.exists(filepath):
+        with open(filepath, 'w', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=['email', 'tokens', 'photos_uploaded', 'events', 'activity'])
+            writer.writeheader()
+
+    # Read the user data
+    user_data = None
+    with open(filepath, 'r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            if row['email'] == email:
+                # Convert events and activity from stringified JSON
+                row['events'] = json.loads(row['events']) if row['events'] else []
+                row['activity'] = json.loads(row['activity']) if row['activity'] else []
+                user_data = row
+                break
+
+    return render_template('user.html', user_data=user_data)
+
+
 
 
 @app.route("/upload", methods=["POST"])
@@ -115,6 +140,7 @@ def load_users():
             users[row['email']] = row['password']
     return users
 
+
 @app.route('/login', methods=['POST'])
 def login():
     email = request.form['email']
@@ -169,6 +195,12 @@ def register():
 
     flash("Registration successful! You can now log in.", "success")
     return redirect(url_for('home') + '#loginModal')
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    session.pop('_flashes', None)
+    return redirect(url_for('home'))
 
     
 @app.route('/matches/<filename>')

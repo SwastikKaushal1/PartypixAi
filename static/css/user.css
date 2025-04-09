@@ -1,0 +1,323 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: #0f001a;
+    color: #eee;
+    overflow-x: hidden;
+  }
+  
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 30px 10%;
+    position: fixedx;
+    width: 100%;
+    top: 0;
+    left: 0;  
+    z-index: 100;
+    background: transparent;
+  }
+  
+  .logo {
+    font-size: 1.8em;
+    font-weight: bold;  
+    color: #d47aff;
+    transition: transform 0.3s ease, text-shadow 0.3s ease;
+    cursor: pointer;
+  }
+  
+  .logo:hover {
+    transform: scale(1.1);
+    text-shadow: 0 0 10px #d47aff, 0 0 20px #d47aff;
+  }
+      
+  .nav-links {
+    display: flex;
+    gap: 30px;
+  }
+  
+  .nav-links a {
+    text-decoration: none;
+    color: #fff;
+    font-weight: 500;
+    position: relative;
+    transition: color 0.3s;
+  }
+  
+
+  
+  .nav-links a:hover::after {
+    width: 100%;
+  }
+  
+  .nav-links a:hover {
+    color: #d47aff;
+  }
+  
+  
+  /* User photo and dropdown styles */
+  .user-profile {
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+  
+
+  
+  .user-profile img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+    transition: transform 0.3s ease; /* Smooth scaling on hover */
+  }
+  
+  .user-profile:hover img {
+    transform: scale(1.1); /* Enlarge the profile image slightly */
+  }
+  
+  .dropdown-arrow {
+    font-size: 12px;
+    color: white;
+    cursor: pointer;
+    margin-left: 5px;
+    transition: transform 0.3s ease; /* Animation on hover */
+  }
+  
+  .user-profile:hover .dropdown-arrow {
+    transform: rotate(180deg); /* Rotate the arrow when hovering over the user profile */
+  }
+  
+  .dropdown {
+    display: none;
+    position: absolute;
+    top: 50px;
+    right: -28;
+    background-color: transparent;
+    color: white;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dropdown a {
+    color: white;
+    padding: 10px 20px;
+    display: block;
+    text-decoration: none;
+  }
+
+
+
+
+
+
+
+  .main-content {
+    padding: 100px 5% 20px; /* 👈 reduced from 140px */
+    background-color: transparent;
+    border-radius: 10px;
+    width: 80%;
+    margin: 0 auto 20px auto;
+    box-sizing: border-box;
+  }
+  
+  /* Welcome Section */
+  .welcome-section {
+    background-color: #3b1e5a;
+    padding: 30px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .welcome-section h2 {
+    font-size: 1.8em;
+    margin-bottom: 10px;
+    color: white;
+  }
+  .welcome-section h2:hover{
+    font-size: 1.8em;
+    margin-bottom: 10px;
+  }
+
+
+  
+  .stats {
+    font-size: 1.2em;
+    margin-bottom: 20px;
+  }
+  
+  .stats p {
+    margin: 5px 0;
+  }
+  
+  .create-event-btn {
+    background-color: #d47aff;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .create-event-btn:hover {
+    background-color: #a742e4;
+  }
+  
+  /* Event Management Section */
+  .manage-events {
+    background-color: #3b1e5a;
+    padding: 30px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .manage-events h3 {
+    font-size: 1.6em;
+    margin-bottom: 20px;
+    color: #d47aff;
+  }
+  
+  .event-card {
+    background: #251336;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+  }
+  
+  .event-card h4 {
+    font-size: 1.3em;
+    margin: 0;
+    color: #d47aff;
+  }
+  
+  .event-card a {
+    color: #d47aff;
+    text-decoration: none;
+    font-size: 1em;
+  }
+  
+  .event-card a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Tokens Section */
+  .tokens-section {
+    background-color: #3b1e5a;
+    padding: 30px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .tokens-section h3 {
+    font-size: 1.6em;
+    margin-bottom: 20px;
+    color: #d47aff;
+  }
+  
+  .tokens-section p {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+  }
+  
+  .tokens-section button {
+    background-color: #d47aff;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .tokens-section button:hover {
+    background-color: #a742e4;
+  }
+  
+  /* Activity Feed Section */
+  .activity-feed {
+    background-color: #3b1e5a;
+    padding: 30px;
+    border-radius: 10px;
+  }
+  
+  .activity-feed h3 {
+    font-size: 1.6em;
+    margin-bottom: 20px;
+    color: #d47aff;
+  }
+  
+  .activity-feed ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .activity-feed ul li {
+    background-color: #251336;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 5px;
+    color: #ddd;
+  }
+  
+
+
+
+
+
+
+  .support-section {
+    background-color: #f9f9f9;
+    padding: 20px;
+    margin-top: 40px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  
+  .support-section h3 {
+    font-size: 22px;
+    margin-bottom: 10px;
+  }
+  
+  .support-section p {
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+  
+  .support-form textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 14px;
+  }
+  
+  .support-form button {
+    margin-top: 12px;
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+  
+  .support-form button:hover {
+    background-color: #0056b3;
+  }
+  

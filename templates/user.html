@@ -4,12 +4,144 @@
 <head>
   <meta charset="UTF-8">
   <title>User Dashboard</title>
+  <link rel="stylesheet" href="/static/css/user.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Add jQuery -->
 </head>
 <body>
-  <h1>Welcome, {{ session['user'] }}!</h1>
-  <p>You are now logged in.</p>
-print("Session contents:", session)
+
+  <nav class="navbar">
+    <div class="logo">PartyPix AI</div>
+    <div class="nav-links">
+      <a href="#">Dashboard</a>
+      <a href="#how-it-works">Manage Events</a>
+      <a href="#about">Tokens</a>
+      <a href="#contactus">Need Support?</a>
+
+      <!-- User profile with image and dropdown -->
+      <div class="user-profile">
+        <!-- Profile image, can be changed to a dynamic user image -->
+        <img src="/static/images/pfpdefault.jpg" alt="User Photo" id="user-photo">
+        
+        <!-- Dropdown arrow indicator that will open the dropdown -->
+        <span class="dropdown-arrow" id="dropdown-arrow">▼</span>
+        
+        <!-- Dropdown menu -->
+        <div class="dropdown" id="dropdown-menu">
+          <a href="#">Profile Settings</a>
+          <a href="#">Account Settings</a>
+          <a href="{{ url_for('logout') }}">Log Out</a>  
+        </div>
+      </div>
+    </div>
+  </nav>
+
+<!-- Main Content Section -->
+<div class="main-content">
+  <!-- Welcome Section -->
+  <div class="welcome-section">
+    <h2>Welcome back, {{ session['user'] }}!</h2>
+    <div class="stats">
+      <p>Total Events: {{ events | length }}</p>
+      <p>Tokens: {{ tokens }} Gold Tokens</p>
+      <p>Photos Uploaded: {{ photos_uploaded }}</p>
+    </div>
+    <button class="create-event-btn">Create New Event</button>
+  </div>
+
+  <!-- Event Management Section -->
+  <div class="manage-events" id="manage-events">
+    <h3>Your Events</h3>
+    {% for event in events %}
+      <div class="event-card">
+        <h4>{{ event.title }}</h4>
+        <p>Status: {{ event.status }}</p>
+        <a href="#">View Event</a>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Activity Feed Section -->
+  <div class="activity-feed">
+    <h3>Recent Activity</h3>
+    <ul>
+      {% for item in activity %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 
+ 
+<div class="support-section" id="contactus">
+  <h3>Need Support?</h3>
+  <p>If you're experiencing issues or need help, feel free to contact our support team below.</p>
+  
+  <form class="support-form" method="POST" action="/support">
+    <label for="issue">Describe your issue:</label>
+    <textarea id="issue" name="issue" rows="4" placeholder="Explain your problem here..." required></textarea>
+    
+    <button type="submit">Submit Ticket</button>
+  </form>
+</div> -->
+
+
+
+  <script>
+    $(document).ready(function() {
+      $('#dropdown-arrow').click(function() {
+        $('#dropdown-menu').toggle(); // Toggle visibility of the dropdown
+      });
+
+      // Close the dropdown if clicked outside
+      $(document).click(function(event) {
+        if (!$(event.target).closest('.user-profile').length) {
+          $('#dropdown-menu').hide();
+        }
+      });
+    });
+  </script>
 
 </body>
 </html>
-print("Session contents:", session)
