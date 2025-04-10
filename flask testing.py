@@ -32,6 +32,20 @@ def home():
 def error():
     return render_template('index.html')
 
+
+@app.route('/<page>')
+def load_page(page):
+    if 'user' not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for('home') + '#loginModal')
+
+    allowed_pages = ['dashboard', 'events', 'support','token']
+    if page in allowed_pages:
+        return render_template('user.html', page=page)
+    else:
+        return render_template('index.html', page='dashboard')  # fallback if invalid
+
+
 @app.route('/user')
 def userlogged():
     if 'user' not in session:
@@ -59,7 +73,7 @@ def userlogged():
                 user_data = row
                 break
 
-    return render_template('user.html', user_data=user_data)
+    return render_template('user.html', user_data=user_data,page='dashboard')
 
 
 
@@ -134,11 +148,16 @@ def contact():
 # Read users from CSV
 def load_users():
     users = {}
-    with open('users.csv', mode='r') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            users[row['email']] = row['password']
+    if os.path.exists(USER_DB):
+        with open(USER_DB, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                users[row["email"]] = {
+                    "username": row["username"],
+                    "password": row["password"]
+                }
     return users
+
 
 
 @app.route('/login', methods=['POST'])
@@ -146,25 +165,28 @@ def login():
     email = request.form['email']
     password = request.form['password']
     
-    users = load_users()  # Returns a dictionary { email: password }
+    users = load_users()
 
     if email not in users:
         flash('No account found with this email.', 'error')
         return redirect(url_for('error') + '#loginModal')
 
-    if users[email] != password:
+    if users[email]['password'] != password:
         flash('Incorrect password. Please try again.', 'error')
         return redirect(url_for('error') + '#loginModal')
 
-    # If all is well
+    # Save email + username in session
     session['user'] = email
-    flash('Logged in successfully!', 'success')
+    session['username'] = users[email]['username']
+
     return redirect(url_for('userlogged'))
+
     
 
 
 @app.route("/register", methods=["POST"])
 def register():
+    username = request.form["username"]
     email = request.form["email"]
     password = request.form["password"]
     confirm_password = request.form["confirm_password"]
@@ -177,24 +199,24 @@ def register():
     if not os.path.exists(USER_DB):
         with open(USER_DB, "w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(["email", "password"])
+            writer.writerow(["username", "email", "password"])
 
     # Check if user already exists
     with open(USER_DB, "r") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            if row["email"] == email:
-                flash("User already exists.", "error")
+            if row["email"] == email or row["username"] == username:
+                flash("Email or username already exists.", "error")
                 return redirect(url_for('error') + '#registerModal')
-                
 
     # Save new user
     with open(USER_DB, "a", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow([email, password])
+        writer.writerow([username, email, password])
 
     flash("Registration successful! You can now log in.", "success")
     return redirect(url_for('home') + '#loginModal')
+
 
 @app.route('/logout')
 def logout():
@@ -202,7 +224,37 @@ def logout():
     session.pop('_flashes', None)
     return redirect(url_for('home'))
 
-    
+
+
+@app.route('/supportloggedin', methods=["POST"])
+def contactlogged():
+    contact = request.form.get("contactlog")
+    message = request.form.get("messagelog")
+
+    if contact and message:
+        content = {
+            "embeds": [
+                {
+                    "title": "📩 New Contact Form Submission (Logged in user)",
+                    "fields": [
+                        {"name": "Email", "value": contact, "inline": False},
+                        {"name": "Message", "value": message, "inline": False}
+                    ],
+                    "color": 1127128
+                }
+            ]
+        }
+
+        try:
+            requests.post(DISCORD_WEBHOOK_URL, json=content)
+            flash("Your form has been sumbitted, You will be contacted soon","success")
+        except Exception as e:
+            print(e)
+            flash("Failed to send message.", "error")
+    else:
+        flash("All fields are required!", "error")
+    return redirect(url_for('load_page', page='support'))
+
 @app.route('/matches/<filename>')
 def matched_file(filename):
     return send_from_directory(MATCH_FOLDER, filename)
