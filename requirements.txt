@@ -1,7 +1,5 @@
 flask
 face_recognition
 requests
-uuid
-csv
-json
-re
+numpy
+pillow
