@@ -163,7 +163,11 @@
           <p style="font-size: 0.85rem; color: #999;">Token used: {{ event.token }} | ID: {{ event.id }}</p>
           <div class="eve-actions">
             <button disabled>🖼 View</button>
-            <button disabled>✏️ Rename</button>
+            
+            <!-- Rename trigger -->
+            <button onclick="openRenameModal('{{ event.id }}', '{{ event.title }}')">✏️ Rename</button>
+
+            <!-- Delete -->
             <form action="/delete_event/{{ event.id }}" method="POST" style="display:inline;">
               <button type="submit" onclick="return confirm('Are you sure you want to delete this event?')">🗑 Delete</button>
             </form>
@@ -176,6 +180,19 @@
   </div>
 </div>
 
+<!-- Rename Modal -->
+<div id="overlay" class="overlay" style="display:none;"></div>
+
+<div id="renameModal" class="rename-modal" style="display:none;">
+  <form method="POST" id="renameForm">
+    <label for="new_title">New Event Title:</label>
+    <input type="text" name="new_title" required>
+    <div style="margin-top:10px;">
+      <button type="submit">✅ Rename</button>
+      <button type="button" onclick="closeRenameModal()">❌ Cancel</button>
+    </div>
+  </form>
+</div>
 
 
 <div style="display: flex; justify-content: flex-end; margin-top: 30px; margin-bottom: 40px;">
@@ -354,7 +371,18 @@
     closePopup(); // Replace with Flask integration logic later
   }
 </script>
+<script>
+  function openRenameModal(eventId) {
+    document.getElementById('renameForm').action = `/rename_event/${eventId}`;
+    document.getElementById('renameModal').style.display = 'block';
+    document.getElementById('overlay').style.display = 'block';
+  }
 
+  function closeRenameModal() {
+    document.getElementById('renameModal').style.display = 'none';
+    document.getElementById('overlay').style.display = 'none';
+  }
+</script>
 
 </body>
 </html>

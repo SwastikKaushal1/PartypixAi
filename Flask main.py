@@ -149,6 +149,49 @@ def delete_event(event_id):
     return redirect("/events?message=Event deleted successfully!")
 
 
+@app.route('/rename_event/<event_id>', methods=['POST'])
+def rename_event(event_id):
+    new_title = request.form.get('new_title', '').strip()
+    user_email = session.get('user')
+
+    if not new_title or not user_email:
+        return redirect('/dashboard?page=events')
+
+    # 1. Update events.csv
+    updated_events = []
+    with open('events.csv', newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row['id'] == event_id:
+                row['name'] = new_title  # Assuming 'name' is the title
+            updated_events.append(row)
+
+    with open('events.csv', 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=updated_events[0].keys())
+        writer.writeheader()
+        writer.writerows(updated_events)
+
+    # 2. Update user_data.csv
+    updated_user_data = []
+    with open('user_data.csv', newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row['email'] == user_email:
+                events = json.loads(row['events']) if row['events'] else []
+                for event in events:
+                    if event.get('id') == event_id:
+                        event['title'] = new_title
+                row['events'] = json.dumps(events)
+            updated_user_data.append(row)
+
+    with open('user_data.csv', 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=updated_user_data[0].keys())
+        writer.writeheader()
+        writer.writerows(updated_user_data)
+
+    return redirect("/events?message=Event renammed successfully!")
+
+
 
 @app.route("/create_event", methods=["POST"])
 def create_event():
