@@ -2,7 +2,6 @@ flask
 face_recognition
 requests
 uuid
-shutil
 csv
 json
 re
