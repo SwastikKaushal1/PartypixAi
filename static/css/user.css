@@ -707,7 +707,9 @@
     font-family: 'Poppins', sans-serif;
     box-shadow: 0 6px 16px rgba(212, 122, 255, 0.4);
     transition: background 0.3s ease, transform 0.2s ease;
-    margin-top: 30px;
+    margin-top: -100px;
+    text-decoration: none;
+    margin-bottom: 40px;
   }
   
   #eve-create-button:hover {
@@ -794,28 +796,206 @@
 
 
 
-  .overlay {
+
+  .close1-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background: #ff87e2;
+    color: black;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-right: 20px;
+  }
+
+  .close-btn:hover {
+    background: #ffd700;
+  }
+
+  .popup-overlay {
+    display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    backdrop-filter: blur(6px);
-    background: rgba(0, 0, 0, 0.4);
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
     z-index: 999;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .popup-overlay.active {
+    display: flex;
+  }
+
+  .container {
+    background: #1a0d2e;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 0 20px #3b1e5a;
+    width: 90%;
+    max-width: 600px;
+    text-align: center;
+    position: relative;
+    animation: popFadeIn 0.3s ease;
+  }
+
+  h1 {
+    font-size: 2rem;
+    color: #d47aff;
+    margin-bottom: 10px;
+  }
+
+  .event-meta {
+    color: #aaa;
+    font-size: 0.9rem;
+    margin-bottom: 25px;
+  }
+
+  .event-desc {
+    margin-bottom: 30px;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #ddd;
+  }
+
+  .popup-box {
+    background: #1a0d2e;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px #d47aff;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    animation: popFadeIn 0.3s ease;
+  }
+
+  @keyframes popFadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .popup-box h2 {
+    color: #d47aff;
+    margin-bottom: 15px;
+  }
+
+  .popup-box p {
+    color: #ccc;
+    font-size: 0.95rem;
+    margin: 10px 0;
+  }
+
+  .popup-box code {
+    background: #2b1847;
+    padding: 6px 10px;
+    border-radius: 6px;
+    display: inline-block;
+    color: #ffd700;
+    font-size: 0.95rem;
+  }
+
+
+
+  .action1-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    font-size: 1rem;
+    background: linear-gradient(90deg, #d47aff, #00eaff);
+    color: black;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+    font-weight: bold;
+    box-shadow: 0 0 10px #d47aff;
+  }
+
+  .action1-btn:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 20px #ff87e2;
+  }
+
+
+
+
+  #rename-popup-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 999;
+    justify-content: center;
+    align-items: center;
   }
   
-  .rename-modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #1a1a2e;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 0 15px #d47aff;
-    z-index: 1000;
-    min-width: 280px;
+  #rename-popup-box {
+    display: none;
+    background: #1a0d2e;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px #d47aff;
+    max-width: 400px;
+    width: 90%;
     text-align: center;
+    animation: popFadeIn 0.3s ease;
+    z-index: 1000;
+    margin: auto;
+    position: fixed;
+    left: 0; right: 0; top: 50%; transform: translateY(-50%);
+  }
+  
+  .rename-input {
+    padding: 10px 15px;
+    border-radius: 10px;
+    border: none;
+    font-size: 1rem;
+    width: 100%;
+    margin-top: 10px;
+    background: #2b1847;
+    color: white;
+  }
+  
+
+  .actionrename-btn {
+    padding: 10px 20px;
+    background: linear-gradient(90deg, #d47aff, #00eaff);
+    color: black;
+    font-weight: bold;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 0 10px #d47aff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-right: 10px;
+  }
+  
+  .actionrename-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px #ff87e2;
+  }
+  
+  .closerename-btn {
+    padding: 10px 20px;
+    background: #ff87e2;
+    color: black;
+    font-weight: bold;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .closerename-btn:hover {
+    background: #ffd700;
+    box-shadow: 0 0 15px #ffd700;
+    transform: scale(1.05);
   }
   

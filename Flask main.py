@@ -191,6 +191,89 @@ def rename_event(event_id):
 
     return redirect("/events?message=Event renammed successfully!")
 
+@app.route('/events/view/<event_id>')
+def view_event(event_id):
+    user_email = session.get('user')
+    selected_event = None
+
+    session["eventidoppened"]=event_id
+    print(session["eventidoppened"])
+
+    with open('user_data.csv', newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row['email'] == user_email:
+                events = json.loads(row['events']) if row['events'] else []
+                for event in events:
+                    if event['id'] == event_id:
+                        selected_event = event
+                        break
+                break
+
+    return render_template('user.html',page="events", events=events, selected_event=selected_event)
+
+
+@app.route('/upload_photo', methods=['POST'])
+def upload_photo():
+    user_email = session.get('user')
+    event_id = session.get('eventidoppened')  # ✅ From session
+
+    if not user_email or not event_id:
+        return redirect('/login')
+
+    uploaded_files = request.files.getlist('photos')
+
+    if not uploaded_files:
+        return "No files uploaded", 400
+
+    # Find matching event from CSV
+    with open('events.csv', newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        event = next((row for row in reader if row['id'] == event_id), None)
+
+    if not event:
+        return "Event not found", 404
+
+    token = event['token'].lower()
+
+    # Upload limits
+    limits = {
+        'silver': 50,
+        'gold': 100,
+        'diamond': 250,
+        'plat': 400,
+        'royal': 600
+    }
+    max_uploads = limits.get(token, 50)
+
+    # 🔍 Use full email (with @ and .) in folder name
+    folder_path = f'Photos_data/{event_id}_{user_email}'
+
+    if not os.path.isdir(folder_path):
+        return f"Upload folder not found: {folder_path}", 404
+
+    # Count current files
+    current_files = len([
+        f for f in os.listdir(folder_path)
+        if os.path.isfile(os.path.join(folder_path, f))
+    ])
+    available_slots = max_uploads - current_files
+
+    if available_slots <= 0:
+        return f"Upload limit reached for this event ({max_uploads} photos allowed)", 403
+
+    uploaded_count = 0
+    for file in uploaded_files:
+        if uploaded_count >= available_slots:
+            break
+        if file.filename:
+            file.save(os.path.join(folder_path, file.filename))
+            uploaded_count += 1
+
+    return redirect(f"/events?message=Uploaded {uploaded_count} photo(s) successfully!")
+
+
+
 
 
 @app.route("/create_event", methods=["POST"])
@@ -226,7 +309,7 @@ def create_event():
     event_id = str(uuid.uuid4())[:8]
 
     # Create photo folder with event ID and sanitized email
-    safe_email = user_email.replace("@", "_at_").replace(".", "_")
+    safe_email = user_email
     photo_folder_name = f"{event_id}_{safe_email}"
     photo_folder_path = os.path.join("Photos_data", photo_folder_name)
     os.makedirs(photo_folder_path, exist_ok=True)
@@ -385,44 +468,6 @@ def userlogged():
     page='dashboard'
 )
 
-
-
-
-
-@app.route("/upload", methods=["POST"])
-def upload():
-    file = request.files['image']
-    if not file:
-        return "No file uploaded", 400
-
-    filename = str(uuid.uuid4()) + ".jpg"
-    filepath = os.path.join(UPLOAD_FOLDER, filename)
-    file.save(filepath)
-
-    guest_image = face_recognition.load_image_file(filepath)
-    guest_encoding = face_recognition.face_encodings(guest_image)
-    
-    if len(guest_encoding) == 0:
-        return "No face found in the image", 400
-
-    guest_encoding = guest_encoding[0]
-    matches = []
-
-    for img_name in os.listdir(DATASET_FOLDER):
-        if img_name.lower().endswith(('.jpg', '.jpeg', '.png')):
-            img_path = os.path.join(DATASET_FOLDER, img_name)
-            image = face_recognition.load_image_file(img_path)
-            encodings = face_recognition.face_encodings(image)
-            
-            for enc in encodings:
-                distance = face_recognition.face_distance([guest_encoding], enc)[0]
-                if distance < 0.4:
-                    matched_img_path = os.path.join(MATCH_FOLDER, img_name)
-                    shutil.copy(img_path, matched_img_path)
-                    matches.append(img_name)
-                    break
-
-    return render_template("result.html", matches=matches)
 
 @app.route("/contact", methods=["POST"])
 def contact():

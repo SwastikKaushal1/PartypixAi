@@ -49,7 +49,6 @@
         <div class="dash-token dash-platinum">Platinum: {{ tokens['Platinum'] }}</div>
         <div class="dash-token dash-royal">Royal: {{ tokens['Royal'] }}</div>
       </div>
-        <p>Photos Uploaded: {{ photos_uploaded }}</p>
     </div>
     <h3>Confused?? how to create your first event , click the button below!!</h3>
     <padding></padding>
@@ -153,6 +152,10 @@
   {% elif error %}
     <div style="color: red;">{{ error }}</div>
   {% endif %}
+  <div style="display: flex; justify-content: flex-end; margin-top: 30px; margin-bottom: 40px;">
+    <a href="/events?show_form=1" id="eve-create-button">➕ Create Event</a>
+  </div>
+
 
   <div id="eve-list">
     {% if events %}
@@ -162,10 +165,16 @@
           <p>{{ event.desc }}</p>
           <p style="font-size: 0.85rem; color: #999;">Token used: {{ event.token }} | ID: {{ event.id }}</p>
           <div class="eve-actions">
-            <button disabled>🖼 View</button>
+            <a href="/events/view/{{ event.id }}">
+              <button onclick="openEventModal('{{ event.id }}')">👁 View</button>
+            </a>
+            
+
             
             <!-- Rename trigger -->
-            <button onclick="openRenameModal('{{ event.id }}', '{{ event.title }}')">✏️ Rename</button>
+            <button onclick="openRenameModal('{{ event.id }}')">✏ Rename</button>
+
+
 
             <!-- Delete -->
             <form action="/delete_event/{{ event.id }}" method="POST" style="display:inline;">
@@ -181,23 +190,25 @@
 </div>
 
 <!-- Rename Modal -->
-<div id="overlay" class="overlay" style="display:none;"></div>
 
-<div id="renameModal" class="rename-modal" style="display:none;">
+<div id="rename-popup-overlay" class="popup-overlay" style="display:none;"></div>
+
+<!-- Rename Popup Box -->
+<div id="rename-popup-box" class="popup-box" style="display:none;">
   <form method="POST" id="renameForm">
-    <label for="new_title">New Event Title:</label>
-    <input type="text" name="new_title" required>
-    <div style="margin-top:10px;">
-      <button type="submit">✅ Rename</button>
-      <button type="button" onclick="closeRenameModal()">❌ Cancel</button>
+    <h2>✏️ Rename Event</h2>
+    <label for="new_title" style="color:#ccc;">New Event Title:</label>
+    <input type="text" name="new_title" required class="rename-input">
+
+    <div style="margin-top:20px;">
+      <button type="submit" class="actionrename-btn">✅ Rename</button>
+      <button type="button" class="closerename-btn" onclick="closeRenameModal()">❌ Cancel</button>
     </div>
   </form>
 </div>
 
 
-<div style="display: flex; justify-content: flex-end; margin-top: 30px; margin-bottom: 40px;">
-  <a href="/events?show_form=1" id="eve-create-button">➕ Create Event</a>
-</div>
+
 
 {% if show_form %}
 <div id="eve-overlay" style="display:flex">
@@ -279,6 +290,44 @@
 
 
 
+
+
+
+{% if selected_event %}
+<div class="popup-overlay active" id="eventModal">
+  <div class="container">
+    <h1>🌸 {{ selected_event.title }}</h1>
+    <div class="event-meta">Token Used: <strong>{{ selected_event.token }}</strong> | ID: {{ selected_event.id }}</div>
+    <div class="event-desc">
+      Celebrate the joy of union with our captured moments. Upload more memories or share this album!
+    </div>
+
+    <!-- Upload Form -->
+    <form id="uploadForm" action="/upload_photo" method="POST" enctype="multipart/form-data">
+      <input type="file" name="photos" id="photoInput" multiple style="display: none;" onchange="submitUploadForm()" />
+      <!-- <input type="hidden" name="event_id" id="upload_event_id"> -->
+    </form>
+        <button class="action1-btn" onclick="triggerFileInput()">📤 Upload Photo</button>
+
+    <!-- Generate Link -->
+    <button class="action1-btn" onclick="openSharePopup()">🔗 Generate Share Link</button>
+
+    <!-- Close Modal -->
+    <button class="close1-btn" onclick="closeEventModal()">Close</button>
+  </div>
+
+  <!-- Share Link Popup Inside Modal -->
+  <div class="popup-overlay" id="sharePopup">
+    <div class="popup-box">
+      <h2>🔗 Share Link Generated!</h2>
+      <p>Here’s your event access link and password:</p>
+      <p><strong>Link:</strong> <code>https://pixai.app/share/{{ selected_event.id }}</code></p>
+      <p><strong>Password:</strong> <code>{{ selected_event.password or 'WD1234' }}</code></p>
+      <button class="close1-btn" onclick="closeSharePopup()">Close</button>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 
 <footer class="site-footer">
@@ -373,16 +422,57 @@
 </script>
 <script>
   function openRenameModal(eventId) {
-    document.getElementById('renameForm').action = `/rename_event/${eventId}`;
-    document.getElementById('renameModal').style.display = 'block';
-    document.getElementById('overlay').style.display = 'block';
+    const form = document.getElementById('renameForm');
+    form.action = '/rename_event/' + eventId;
+
+    document.getElementById('rename-popup-box').style.display = 'block';
+    document.getElementById('rename-popup-overlay').style.display = 'flex';
   }
 
   function closeRenameModal() {
-    document.getElementById('renameModal').style.display = 'none';
-    document.getElementById('overlay').style.display = 'none';
+    document.getElementById('rename-popup-box').style.display = 'none';
+    document.getElementById('rename-popup-overlay').style.display = 'none';
   }
 </script>
+
+
+<script>
+  function openEventModal(eventId, eventName, token, description) {
+  document.getElementById('eventModal').classList.add('active');
+
+  // Set event ID for upload
+  document.getElementById('upload_event_id').value = eventId;
+
+  // Also show values in modal if needed
+  document.getElementById('event-name').innerText = eventName;
+  document.getElementById('event-token').innerText = token;
+  document.getElementById('event-description').innerText = description;
+  }
+
+  function closeEventModal() {
+    document.getElementById('eventModal').classList.remove('active');
+    closeSharePopup(); // in case share is open
+  }
+
+  function openSharePopup() {
+    document.getElementById('sharePopup').classList.add('active');
+  }
+
+  function closeSharePopup() {
+    document.getElementById('sharePopup').classList.remove('active');
+  }
+
+  function triggerFileInput() {
+    document.getElementById('photoInput').click();
+  }
+
+  function submitUploadForm() {
+    document.getElementById('uploadForm').submit();
+  }
+</script>
+
+
+
 
 </body>
 </html>
