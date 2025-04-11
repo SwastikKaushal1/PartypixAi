@@ -43,58 +43,164 @@
   <div class="welcome-section">
     <h2>Welcome back, {{ session['username'] }}!</h2>
     <div class="stats">
-      <p>Total Events: {{ events | length }}</p>
-      <p>Total Tokens: {{ tokens }} </p>
-      <p>Photos Uploaded: {{ photos_uploaded }}</p>
+      <div class="dash-token-list">
+        <div class="dash-token dash-silver">Silver: {{ tokens['Silver'] }}</div>
+        <div class="dash-token dash-gold">Gold: {{ tokens['Gold'] }}</div>
+        <div class="dash-token dash-platinum">Platinum: {{ tokens['Platinum'] }}</div>
+        <div class="dash-token dash-royal">Royal: {{ tokens['Royal'] }}</div>
+      </div>
+        <p>Photos Uploaded: {{ photos_uploaded }}</p>
     </div>
     <h3>Confused?? how to create your first event , click the button below!!</h3>
     <padding></padding>
     <a href="/support" class="create-event-btn"> Support</a>
   </div>
 
-  <!-- Event Management Section -->
   <div class="manage-events" id="manage-events">
     <h3>Your Events</h3>
     {% for event in events %}
       <div class="event-card">
         <h4>{{ event.title }}</h4>
-        <p>Status: {{ event.status }}</p>
+        <p>Token Used: {{ event.token }}</p>
         <a href="#">View Event</a>
       </div>
     {% endfor %}
   </div>
+  
 
-  <!-- Activity Feed Section -->
-  <div class="activity-feed">
-    <h3>Recent Activity</h3>
-    <ul>
-      {% for item in activity %}
-        <li>{{ item }}</li>
+</div>
+
+
+
+{% elif page == 'token' %}
+<div id="token-flash-modal" class="flash-modal-overlay">
+  <div class="flash-modal">
+    <span class="close-btn" onclick="closeFlashModal()">×</span>
+    <p id="flash-modal-message">{{ get_flashed_messages()[0] if get_flashed_messages() else '' }}</p>
+  </div>
+</div>
+
+<section class="tokens-section">
+  <h2>🎟️ Token Access</h2>
+  <p>
+    Select a token tier based on how many photos you want to upload. 
+    Submit your application for admin approval. 
+    <strong>Note:</strong> 1 token = 1 event.
+  </p>
+  
+  <div class="token-tiers">
+
+    <div class="token-card">
+      <h3>🥉 Silver</h3>
+      <p>📸 Upload Limit: 50 Photos</p>
+      <form action="/applytokens" method="POST">
+        <input type="hidden" name="tier_name" value="Silver">
+        <button type="submit" class="apply-button">Apply for Silver</button>
+      </form>
+    </div>
+
+    <div class="token-card">
+      <h3>🥈 Gold</h3>
+      <p>📸 Upload Limit: 100 Photos</p>
+      <form action="/applytokens" method="POST">
+        <input type="hidden" name="tier_name" value="Gold">
+        <button type="submit" class="apply-button">Apply for Gold</button>
+      </form>
+    </div>
+
+    <div class="token-card">
+      <h3>💎 Diamond</h3>
+      <p>📸 Upload Limit: 250 Photos</p>
+      <form action="/applytokens" method="POST">
+        <input type="hidden" name="tier_name" value="Diamond">
+        <button type="submit" class="apply-button">Apply for Diamond</button>
+      </form>
+    </div>
+
+    <div class="token-card">
+      <h3>👑 Platinum</h3>
+      <p>📸 Upload Limit: 400 Photos</p>
+      <form action="/applytokens" method="POST">
+        <input type="hidden" name="tier_name" value="Platinum">
+        <button type="submit" class="apply-button">Apply for Platinum</button>
+      </form>
+    </div>
+
+    <div class="token-card">
+      <h3>🌌 Royal</h3>
+      <p>📸 Upload Limit: 600 Photos</p>
+      <form action="/applytokens" method="POST">
+        <input type="hidden" name="tier_name" value="Royal">
+        <button type="submit" class="apply-button">Apply for Royal</button>
+      </form>
+    </div>
+
+  </div>
+  {{ token_status_display | safe }}
+</section>
+
+
+
+
+
+{% elif page == 'events' %}
+<div id="eve-container">
+  <h1>📁 My Events</h1>
+  <p>All your special moments in one place.</p>
+
+  {% if message %}
+    <div style="color: lightgreen;">{{ message }}</div>
+  {% elif error %}
+    <div style="color: red;">{{ error }}</div>
+  {% endif %}
+
+  <div id="eve-list">
+    {% if events %}
+      {% for event in events %}
+        <div class="eve-card">
+          <h3>{{ event.title }}</h3>
+          <p>{{ event.desc }}</p>
+          <p style="font-size: 0.85rem; color: #999;">Token used: {{ event.token }} | ID: {{ event.id }}</p>
+          <div class="eve-actions">
+            <button disabled>🖼 View</button>
+            <button disabled>✏️ Rename</button>
+            <form action="/delete_event/{{ event.id }}" method="POST" style="display:inline;">
+              <button type="submit" onclick="return confirm('Are you sure you want to delete this event?')">🗑 Delete</button>
+            </form>
+          </div>
+        </div>
       {% endfor %}
-    </ul>
+    {% else %}
+      <p>You haven't created any events yet.</p>
+    {% endif %}
   </div>
 </div>
 
 
 
+<div style="display: flex; justify-content: flex-end; margin-top: 30px; margin-bottom: 40px;">
+  <a href="/events?show_form=1" id="eve-create-button">➕ Create Event</a>
+</div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+{% if show_form %}
+<div id="eve-overlay" style="display:flex">
+  <div id="eve-popup">
+    <h2>Create a New Event</h2>
+    <form method="POST" action="/create_event" id="eve-form">
+      <input type="text" placeholder="Event Name" name="eve_name" required>
+      <textarea placeholder="Event Description (optional)" name="eve_desc"></textarea>
+      <select name="eve_token" required>
+        <option value="" disabled selected>Select a Token</option>
+        {% for token, count in token_data.items() if count > 0 %}
+          <option value="{{ token }}">{{ token }} ({{ count }})</option>
+        {% endfor %}
+      </select>
+      <button type="submit" id="eve-create">Create Event</button>
+      <a href="/events" class="eve-close-btn">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endif %}
 
 
 
@@ -208,6 +314,47 @@
       });
     });
   </script>
+
+<script>
+  function closeFlashModal() {
+    document.getElementById('token-flash-modal').style.display = 'none';
+  }
+
+  window.onload = function() {
+    const message = document.getElementById('flash-modal-message').innerText;
+    if (message.trim() !== "") {
+      document.getElementById('token-flash-modal').style.display = 'flex';
+    }
+  };
+</script>
+
+<script>
+  function openPopup() {
+    document.getElementById('eve-overlay').style.display = 'flex';
+  }
+
+  function closePopup() {
+    document.getElementById('eve-overlay').style.display = 'none';
+    document.getElementById('event-name').value = '';
+    document.getElementById('event-desc').value = '';
+    document.getElementById('selected-token').selectedIndex = 0;
+  }
+
+  function createEvent() {
+    const name = document.getElementById('event-name').value;
+    const desc = document.getElementById('event-desc').value;
+    const token = document.getElementById('selected-token').value;
+
+    if (!name || !token) {
+      alert("Please enter an event name and select a token.");
+      return;
+    }
+
+    alert(`Creating event:\nName: ${name}\nToken: ${token}\nDescription: ${desc}`);
+    closePopup(); // Replace with Flask integration logic later
+  }
+</script>
+
 
 </body>
 </html>

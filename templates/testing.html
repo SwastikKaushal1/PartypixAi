@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PixAI - Events</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #0f001a;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: #d47aff;
+      margin-bottom: 10px;
+    }
+
+    .event-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .event-card {
+      background-color: #3b1e5a;
+      padding: 16px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(212, 122, 255, 0.2);
+      transition: transform 0.2s ease;
+    }
+
+    .event-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .event-card h3 {
+      margin: 0 0 10px;
+      font-size: 1.2rem;
+      color: #ffd700;
+    }
+
+    .event-card p {
+      font-size: 0.95rem;
+      color: #ccc;
+    }
+
+    .actions {
+      margin-top: 12px;
+    }
+
+    .actions button {
+      margin-right: 8px;
+      padding: 6px 12px;
+      background: #2e2e2e;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .actions button:hover {
+      background: #444;
+    }
+
+    .create-button {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background-color: #d47aff;
+      color: #0f001a;
+      padding: 14px 24px;
+      border: none;
+      border-radius: 30px;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(212, 122, 255, 0.4);
+      transition: background 0.3s ease;
+    }
+
+    .create-button:hover {
+      background-color: #ff87e2;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 0, 26, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+    }
+
+    .popup {
+      background-color: #1c1c1c;
+      padding: 30px;
+      border-radius: 16px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    }
+
+    .popup h2 {
+      margin-top: 0;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    input, textarea, select {
+      background: #2e2e2e;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    select option {
+      background: #2e2e2e;
+      color: #fff;
+    }
+
+    button.create {
+      margin-top: 12px;
+      background-color: #28a745;
+      padding: 12px;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    button.create:hover {
+      background-color: #218838;
+    }
+
+    .close-btn {
+      margin-top: 10px;
+      background: transparent;
+      color: #bbb;
+      border: none;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .close-btn:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📁 My Events</h1>
+    <p>All your special moments in one place.</p>
+
+    <div class="event-list">
+      <div class="event-card">
+        <h3>Trip to Japan</h3>
+        <p>Tokyo, Kyoto and more ✈️</p>
+        <div class="actions">
+          <button>🖼 View</button>
+          <button>✏️ Rename</button>
+          <button>🗑 Delete</button>
+        </div>
+      </div>
+
+      <div class="event-card">
+        <h3>Birthday Bash</h3>
+        <p>My 21st birthday 🎉</p>
+        <div class="actions">
+          <button>🖼 View</button>
+          <button>✏️ Rename</button>
+          <button>🗑 Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Create Event Button -->
+  <button class="create-button" onclick="openPopup()">➕ Create Event</button>
+
+  <div class="overlay" id="overlay">
+    <div class="popup">
+      <h2>Create a New Event</h2>
+      <div class="form-group" id="event-form">
+        <input type="text" placeholder="Event Name" id="event-name">
+        <textarea placeholder="Event Description (optional)" id="event-desc"></textarea>
+        <select id="selected-token">
+          <option value="" disabled selected>Select a Token</option>
+          <option value="Silver">🥈 Silver</option>
+          <option value="Gold">🥇 Gold</option>
+          <option value="Platinum">💿 Platinum</option>
+          <option value="Royal">👑 Royal</option>
+        </select>
+        <button class="create" onclick="createEvent()">Create Event</button>
+        <button class="close-btn" onclick="closePopup()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openPopup() {
+      document.getElementById('overlay').style.display = 'flex';
+    }
+
+    function closePopup() {
+      document.getElementById('overlay').style.display = 'none';
+      document.getElementById('event-name').value = '';
+      document.getElementById('event-desc').value = '';
+      document.getElementById('selected-token').selectedIndex = 0;
+    }
+
+    function createEvent() {
+      const name = document.getElementById('event-name').value;
+      const desc = document.getElementById('event-desc').value;
+      const token = document.getElementById('selected-token').value;
+
+      if (!name || !token) {
+        alert("Please enter an event name and select a token.");
+        return;
+      }
+
+      alert(`Creating event:\nName: ${name}\nToken: ${token}\nDescription: ${desc}`);
+      closePopup(); // Replace with Flask integration logic later
+    }
+  </script>
+</body>
+</html>
