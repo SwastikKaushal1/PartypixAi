@@ -36,7 +36,7 @@ ALLOWED_IPS = ['127.0.0.1']  # Set your allowed IPs here
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(TEMP_GUEST_PHOTOS_FOLDER, exist_ok=True)
 
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1359406881914884147/jkynHq0DsAZA__f7IqqtRU9w1IrzU1R-8v1pzis9cZcY5D0G-P6yUonDgePUdqkwMylh"
+DISCORD_WEBHOOK_URL = "enter your discord webhook here"
 
 TEMP_GUEST_PHOTOS_FOLDER = "static/temp_guest_photos"
 
