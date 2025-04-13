@@ -164,6 +164,7 @@
           <h3>{{ event.title }}</h3>
           <p>{{ event.desc }}</p>
           <p style="font-size: 0.85rem; color: #999;">Token used: {{ event.token }} | ID: {{ event.id }}</p>
+          <p style="font-size: 0.85rem; color: #999;">Photo_uploaded: {{ event.photo_uploaded }} </p>
           <div class="eve-actions">
             <a href="/events/view/{{ event.id }}">
               <button onclick="openEventModal('{{ event.id }}')">👁 View</button>
@@ -308,9 +309,30 @@
       <!-- <input type="hidden" name="event_id" id="upload_event_id"> -->
     </form>
         <button class="action1-btn" onclick="triggerFileInput()">📤 Upload Photo</button>
+    <form action="/eventphoto" method="GET" target="_blank" style="display:inline;">
+          <button type="submit" class="action1-btn">🖼️ View Photos</button>
+     </form>
+        
 
     <!-- Generate Link -->
     <button class="action1-btn" onclick="openSharePopup()">🔗 Generate Share Link</button>
+
+<!-- Hidden Photo Grid -->
+  <div id="photoGrid" style="display: none; margin-top: 20px;">
+    <h2>📸 Uploaded Photos</h2>
+    {% if selected_event.photos %}
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px;">
+        {% for photo in selected_event.photos %}
+          <div style="background:#1a002a; padding:10px; border-radius:10px; box-shadow:0 4px 10px rgba(255,255,255,0.1);">
+            <img src="{{ url_for('static', filename='event_photos/' + selected_event.id + '/' + photo) }}" alt="photo" style="width: 100%; border-radius: 8px;" />
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p>No photos uploaded yet.</p>
+    {% endif %}
+  </div>
+
 
     <!-- Close Modal -->
     <button class="close1-btn" onclick="closeEventModal()">Close</button>
@@ -321,12 +343,16 @@
     <div class="popup-box">
       <h2>🔗 Share Link Generated!</h2>
       <p>Here’s your event access link and password:</p>
-      <p><strong>Link:</strong> <code>https://pixai.app/share/{{ selected_event.id }}</code></p>
+      <p><strong>Link:</strong> <code>http://127.0.0.1:5000/guest/{{ selected_event.id }}</code></p>
       <p><strong>Password:</strong> <code>{{ selected_event.password or 'WD1234' }}</code></p>
       <button class="close1-btn" onclick="closeSharePopup()">Close</button>
     </div>
   </div>
 </div>
+
+
+
+
 {% endif %}
 
 
@@ -471,6 +497,17 @@
   }
 </script>
 
+
+<script>
+  function togglePhotoGrid() {
+    const grid = document.getElementById('photoGrid');
+    if (grid.style.display === 'none' || grid.style.display === '') {
+      grid.style.display = 'block';
+    } else {
+      grid.style.display = 'none';
+    }
+  }
+</script>
 
 
 

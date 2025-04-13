@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Uploaded Photos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #0f001a;
+      color: white;
+      font-family: 'Poppins', sans-serif;
+      padding: 20px;
+    }
+    h2 {
+      color: #d47aff;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+    }
+    .photo-card {
+      background: #1a002a;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(255,255,255,0.1);
+    }
+    .photo-card img {
+      width: 100%;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>📸 Uploaded Photos for {{ selected_event['title'] }}</h2>
+
+  {% if image_files %}
+    <div class="grid">
+      {% for photo in image_files %}
+        <div class="photo-card">
+          <!-- Link the images to the '/uploads' route -->
+          <img src="{{ url_for('serve_photo', filename=(event_image_path + '/' + photo).replace('\\', '/')) }}" alt="photo">
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>No photos uploaded yet.</p>
+  {% endif %}
+
+</body>
+</html>

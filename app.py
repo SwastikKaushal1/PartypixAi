@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, send_from_directory, redirect, url_for, flash,session
+from flask import Flask, request, render_template, send_from_directory, redirect, url_for, flash,session , Response
 import face_recognition
 import os
 import uuid
@@ -7,25 +7,40 @@ import requests
 import csv
 import json
 import re
+import zipfile
+from io import BytesIO
+from flask import send_file
+import pandas as pd
+from functools import wraps
+
 
 app = Flask(__name__)
 app.secret_key = "super_secure_party_pix_secret_2024" # Required for flashing messages
 
 UPLOAD_FOLDER = "uploads"
 MATCH_FOLDER = "matches"
+TEMP_GUEST_PHOTOS_FOLDER = "static/temp_guest_photos"
 DATASET_FOLDER = "wedding_photos"
 USER_DB = "users.csv"
 PENDING_FILE = "pending_tokens.csv"
 USER_DATA_FILE = "user_data.csv"
+BASE_FOLDER_PATH = './'  # Relative path to the current directory
 
 
+# Secure admin path (random)
+SECURE_ADMIN_PATH = "admin-9f3k29dj2ks"
+USERNAME = "admin"
+PASSWORD = "admin12"
+ALLOWED_IPS = ['127.0.0.1']  # Set your allowed IPs here
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(MATCH_FOLDER, exist_ok=True)
+os.makedirs(TEMP_GUEST_PHOTOS_FOLDER, exist_ok=True)
 
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1359406881914884147/jkynHq0DsAZA__f7IqqtRU9w1IrzU1R-8v1pzis9cZcY5D0G-P6yUonDgePUdqkwMylh"
 
+TEMP_GUEST_PHOTOS_FOLDER = "static/temp_guest_photos"
 
+    
 def send_token_embed(username, tier):
     embed = {
         "title": "🎟️ New Token Tier Application",
@@ -85,7 +100,8 @@ def events():
                         "id": row["id"],
                         "title": row["name"],
                         "desc": row["desc"],
-                        "token": row["token"]
+                        "token": row["token"],
+                        "photo_uploaded":row['photo_uploaded']
                     })
     except FileNotFoundError:
         event_list = []
@@ -227,9 +243,13 @@ def upload_photo():
         return "No files uploaded", 400
 
     # Find matching event from CSV
+    event = None
     with open('events.csv', newline='', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        event = next((row for row in reader if row['id'] == event_id), None)
+        reader = list(csv.DictReader(f))
+        for row in reader:
+            if row['id'] == event_id and row['email'] == user_email:
+                event = row
+                break
 
     if not event:
         return "Event not found", 404
@@ -246,13 +266,11 @@ def upload_photo():
     }
     max_uploads = limits.get(token, 50)
 
-    # 🔍 Use full email (with @ and .) in folder name
     folder_path = f'Photos_data/{event_id}_{user_email}'
 
     if not os.path.isdir(folder_path):
         return f"Upload folder not found: {folder_path}", 404
 
-    # Count current files
     current_files = len([
         f for f in os.listdir(folder_path)
         if os.path.isfile(os.path.join(folder_path, f))
@@ -270,11 +288,63 @@ def upload_photo():
             file.save(os.path.join(folder_path, file.filename))
             uploaded_count += 1
 
+    # ✅ Update photo_uploaded count in events.csv
+    updated_rows = []
+    with open('events.csv', 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row['id'] == event_id and row['email'] == user_email:
+                prev_uploaded = int(row.get('photo_uploaded', 0))
+                row['photo_uploaded'] = str(prev_uploaded + uploaded_count)
+            updated_rows.append(row)
+
+    with open('events.csv', 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=updated_rows[0].keys())
+        writer.writeheader()
+        writer.writerows(updated_rows)
+
     return redirect(f"/events?message=Uploaded {uploaded_count} photo(s) successfully!")
 
 
 
 
+
+@app.route('/eventphoto')
+def eventphoto():
+    if 'user' not in session:
+        return redirect('/login')
+
+    event_id = session.get('eventidoppened')
+    email=session["user"]
+    print(email)
+
+    # Find the selected event
+    with open('user_data.csv', newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row['email'] == session['user']:
+                all_events = json.loads(row['events']) if row['events'] else []
+                for event in all_events:
+                    if event['id'] == event_id:
+                        selected_event = event
+                        break
+                break
+
+    # Find photos in the folder
+    folder_path = f'Photos_data/{event_id}_{session["user"]}'
+    print(folder_path)
+    if os.path.exists(folder_path):
+        photos = [f for f in os.listdir(folder_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+
+    return render_template('eventphoto.html', selected_event=selected_event, photos=photos)
+
+
+
+@app.route('/photo/<event_id>/<filename>')
+def serve_photo(event_id, filename):
+    user_email = session['user']
+    folder_path = f'Photos_data/{event_id}_{user_email}'
+    return send_from_directory(folder_path, filename)
 
 @app.route("/create_event", methods=["POST"])
 def create_event():
@@ -307,6 +377,7 @@ def create_event():
 
     # Generate unique event ID
     event_id = str(uuid.uuid4())[:8]
+    photo_uploaded=0
 
     # Create photo folder with event ID and sanitized email
     safe_email = user_email
@@ -319,8 +390,8 @@ def create_event():
     with open(event_file, "a", newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         if f.tell() == 0:
-            writer.writerow(["id", "email", "name", "desc", "token", "photo_path"])
-        writer.writerow([event_id, user_email, name, desc, token, photo_folder_path])
+            writer.writerow(["id", "email", "name", "desc", "token", "photo_path","photo_uploaded"])
+        writer.writerow([event_id, user_email, name, desc, token, photo_folder_path,photo_uploaded])
 
     # Update user_data.csv (tokens + embedded events list)
     for row in user_rows:
@@ -621,14 +692,18 @@ def applytokens():
     username = session["user"]
     tier_name = request.form.get("tier_name")
 
+    if not os.path.exists(PENDING_FILE):
+        with open(PENDING_FILE, "w", newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["email", "token_name", "status"])  # Add headers if needed
+
     # Check if the user already has a pending request
-    if os.path.exists(PENDING_FILE):
-        with open(PENDING_FILE, newline='', encoding='utf-8') as csvfile:
-            reader = csv.reader(csvfile)
-            for row in reader:
-                if row and row[0] == username:
-                    flash("You already have a pending token application. Wait for admin approval.", "warning")
-                    return redirect(url_for("load_page", page="token"))
+    with open(PENDING_FILE, newline='', encoding='utf-8') as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            if row and row[0] == username:
+                flash("You already have a pending token application. Wait for admin approval.", "warning")
+                return redirect(url_for("load_page", page="token"))
 
     # Save the new pending request
     with open(PENDING_FILE, "a", newline='', encoding='utf-8') as csvfile:
@@ -673,6 +748,440 @@ def applytokens():
 @app.route('/matches/<filename>')
 def matched_file(filename):
     return send_from_directory(MATCH_FOLDER, filename)
+
+
+
+def get_event_email(event_id):
+    with open("events.csv", newline="") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            if row["id"] == event_id:
+                return row["email"]
+    return None
+
+
+def find_matching_photos_and_transfer(guest_image_path, event_id):
+    # Define path where host photos for this specific event are stored
+    user_email=get_event_email(event_id)
+    photo_folder = os.path.join("C:/Users/richa/Desktop/Weeding project/Photos_data", f"{event_id}_{user_email}")
+    event_photos_folder = f"static/event_photos/{event_id}"
+
+    if not os.path.exists(event_photos_folder):
+        os.makedirs(event_photos_folder)
+
+    guest_image = face_recognition.load_image_file(guest_image_path)
+    guest_encoding = face_recognition.face_encodings(guest_image)
+
+    if len(guest_encoding) == 0:
+        return [], "No face found in the image."
+
+    guest_encoding = guest_encoding[0]
+    matching_photos = []
+
+    
+    if not os.path.exists(photo_folder):
+        return [], "Host photo folder not found."
+
+    for filename in os.listdir(photo_folder):
+        if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
+            image_path = os.path.join(photo_folder, filename)
+            image = face_recognition.load_image_file(image_path)
+            face_locations = face_recognition.face_locations(image)
+            face_encodings = face_recognition.face_encodings(image, face_locations)
+
+            match_found = False
+
+            for face_encoding in face_encodings:
+                distance = face_recognition.face_distance([guest_encoding], face_encoding)[0]
+                accuracy = round(1 - distance, 2)
+
+                if accuracy >= 0.6:
+                    match_found = True
+                    break
+
+            if match_found:
+                shutil.copy(image_path, os.path.join(event_photos_folder, filename))
+                matching_photos.append(filename)
+
+    return matching_photos, None if matching_photos else "No matching photos found in the event."
+
+
+@app.route('/guest/<event_id>', methods=['GET', 'POST'])
+def guest_view(event_id):
+    error = None
+    selected_event = None
+    photo_uploaded = False
+    matching_photos = []
+
+
+    with open('user_data.csv', newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            all_events = json.loads(row['events']) if row['events'] else []
+            for event in all_events:
+                if event['id'] == event_id:
+                    selected_event = event
+                    break
+            if selected_event:
+                break
+
+    if not selected_event:
+        return "Event not found", 404
+
+    unlocked_key = f'unlocked_{event_id}'
+
+    # Password handling
+    if request.method == 'POST' and not session.get(unlocked_key):
+        password_entered = request.form.get('password')
+        correct_password = selected_event.get('password', 'WD1234')
+        if password_entered == correct_password:
+            session[unlocked_key] = True
+        else:
+            error = "Incorrect password."
+            return render_template(
+                'guest_combined.html',
+                selected_event=selected_event,
+                require_password=True,
+                error=error
+            )
+
+    if not session.get(unlocked_key):
+        return render_template(
+            'guest_combined.html',
+            selected_event=selected_event,
+            require_password=True,
+            error=error
+        )
+
+    # Photo upload logic
+    if request.method == 'POST' and session.get(unlocked_key):
+        guest_image = request.files.get('guest_photo')
+        if guest_image:
+            guest_image_path = os.path.join(TEMP_GUEST_PHOTOS_FOLDER, guest_image.filename)
+            guest_image.save(guest_image_path)
+
+            matching_photos, error_msg = find_matching_photos_and_transfer(guest_image_path, event_id)
+            photo_uploaded = True
+
+            if error_msg:
+                error = error_msg
+            else:
+                print("✅ Matching completed with results.")
+
+            return render_template(
+                'guest_combined.html',
+                selected_event=selected_event,
+                require_password=False,
+                error=error,
+                photo_uploaded=photo_uploaded,
+                photos=matching_photos,
+                upload_disabled=True
+            )
+
+    # Initial state if just viewing or GET request
+    return render_template(
+        'guest_combined.html',
+        selected_event=selected_event,
+        require_password=False,
+        error=None,
+        photo_uploaded=photo_uploaded,
+        photos=matching_photos,
+        upload_disabled=False
+    )
+
+
+
+
+@app.route('/download_all/<event_id>')
+def download_all_photos(event_id):
+    folder_path = f"static/event_photos/{event_id}"
+
+    if not os.path.exists(folder_path):
+        return "No photos found", 404
+
+    # Create a zip in memory
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+        for filename in os.listdir(folder_path):
+            if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
+                full_path = os.path.join(folder_path, filename)
+                zip_file.write(full_path, arcname=filename)
+
+    zip_buffer.seek(0)
+    return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='matching_photos.zip')
+
+
+
+
+#ADMINS LOGICCCCCC
+
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        client_ip = request.remote_addr
+        if client_ip not in ALLOWED_IPS and '*' not in ALLOWED_IPS:
+            return Response("Forbidden: IP not allowed", 403)
+
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def check_auth(username, password):
+    return username == USERNAME and password == PASSWORD
+
+def authenticate():
+    return Response(
+        "Access denied.\n"
+        "You must provide valid credentials.", 401,
+        {"WWW-Authenticate": 'Basic realm="Login Required"'}
+    )
+
+
+@app.route(f'/{SECURE_ADMIN_PATH}')
+def admin():
+    client_ip = request.remote_addr
+    print("Client IP:", client_ip)
+
+    if client_ip not in ALLOWED_IPS and '*' not in ALLOWED_IPS:
+        return Response("Forbidden: IP not allowed", 403)
+
+    auth = request.authorization
+    if not auth or not check_auth(auth.username, auth.password):
+        return authenticate()
+
+    return render_template("admin_panel.html")
+
+
+def is_allowed():
+    client_ip = request.remote_addr
+    return client_ip in ALLOWED_IPS or '*' in ALLOWED_IPS
+
+
+def load_requests():
+    try:
+        with open('pending_tokens.csv', newline='', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile)
+            rows = list(reader)
+            if not rows:
+                return []
+
+            # Skip the header row and map the remaining rows
+            headers = rows[0]  # First row is the header
+            data_rows = rows[1:]  # The rest are data rows
+
+            return [dict(zip(headers, row)) for row in data_rows]
+
+    except FileNotFoundError:
+        return []
+
+
+
+
+@app.route('/admin-9f3k29dj2ks/dashboard')
+@admin_required
+def dashboard():
+    return render_template('admin_panel.html', active_page='dashboard')
+
+@app.route('/admin-9f3k29dj2ks/users')
+@admin_required
+def manage_users():
+    try:
+        users_df = pd.read_csv("users.csv")
+    except FileNotFoundError:
+        users_df = pd.DataFrame()
+
+    try:
+        user_data_df = pd.read_csv("user_data.csv")
+    except FileNotFoundError:
+        user_data_df = pd.DataFrame()
+
+    users_data = users_df.fillna('').to_dict(orient='records')
+    user_data = user_data_df.fillna('').to_dict(orient='records')
+
+    return render_template(
+        'admin_panel.html',
+        active_page='users',
+        users=users_data,
+        user_data=user_data
+    )
+
+@app.route('/admin-9f3k29dj2ks/events')
+@admin_required
+def manage_events():
+    try:
+        events_df = pd.read_csv("events.csv")
+    except FileNotFoundError:
+        events_df = pd.DataFrame()
+
+    events = events_df.fillna('').to_dict(orient='records')
+
+    return render_template(
+        'admin_panel.html',
+        active_page='events',
+        events=events
+    )
+
+@app.route('/admin-9f3k29dj2ks/requests')
+@admin_required
+def manage_requests():
+    requests = load_requests()
+    return render_template('admin_panel.html', active_page='requests', requests=requests)
+
+@app.route('/admin-9f3k29dj2ks/folders')
+@admin_required
+def manage_folders():
+    base_dir = os.getcwd()  # root of the project
+    exclude_dirs = {'templates', '__pycache__'}
+
+    folders = []
+    for entry in os.listdir(base_dir):
+        path = os.path.join(base_dir, entry)
+        if os.path.isdir(path) and entry not in exclude_dirs:
+            folders.append(entry)
+
+    return render_template('admin_panel.html', active_page='folders', folders=folders)
+
+
+
+@app.route('/uploads/<path:filename>')
+def serve_photo1(filename):
+    full_path = os.path.join(app.root_path, filename)  # Removed 'Photos_data'
+    directory = os.path.dirname(full_path)
+    file = os.path.basename(full_path)
+
+    print(f"[DEBUG] Serving photo - Directory: {directory}, File: {file}")
+    return send_from_directory(directory, file)
+
+
+
+@app.route('/admin-9f3k29dj2ks/events/images/<event_name>')
+def view_event_images(event_name):
+    selected_event = None
+    try:
+        with open("events.csv", mode='r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row['name'] == event_name:
+                    selected_event = row
+                    break
+    except Exception as e:
+        print(f"[DEBUG] Error reading events.csv: {e}")
+        return "Error reading event data.", 500
+
+    if selected_event is None:
+        print(f"[DEBUG] Event '{event_name}' not found in events.csv.")
+        return "Event not found", 404
+
+    event_image_path = selected_event['photo_path']
+    print(f"[DEBUG] Event '{event_name}' image path from CSV: {event_image_path}")
+
+    full_image_path = os.path.join(os.getcwd(), event_image_path)
+    print(f"[DEBUG] Absolute image directory path: {full_image_path}")
+
+    if event_image_path and os.path.exists(full_image_path):
+        try:
+            all_files = os.listdir(full_image_path)
+            print(f"[DEBUG] Files in '{full_image_path}': {all_files}")
+
+            image_files = [f for f in all_files if f.endswith(('.jpg', '.jpeg', '.png', '.gif'))]
+            print(f"[DEBUG] Filtered image files: {image_files}")
+        except Exception as e:
+            print(f"[DEBUG] Error listing image files: {e}")
+            return "Error accessing image files.", 500
+
+        return render_template('admin_viewphoto.html', selected_event=selected_event,
+                               image_files=image_files, event_image_path=event_image_path)
+    else:
+        print(f"[DEBUG] Invalid path or no images found at '{full_image_path}'.")
+        return "No images found for this event or invalid event path.", 404
+
+
+
+
+ALL_TOKENS = ['Gold', 'Silver', 'Platinum', 'Diamond', 'Royal']
+
+@app.route('/admin-9f3k29dj2ks/requests/action', methods=['POST'])
+def handle_token_request():
+    print("POST request received at /admin-9f3k29dj2ks/requests/action")
+    
+    # Debug: Print form data to check what is being sent
+    print("Form Data:", request.form)
+
+    # Check if the request is allowed (assuming is_allowed is implemented elsewhere)
+    if not is_allowed():
+        return "Forbidden", 403
+
+    # Retrieve form data
+    email = request.form.get('email')
+    token_type = request.form.get('token')
+    status = request.form.get('status')
+    action = request.form.get('action')  # This will be 'accept' or 'reject'
+
+    # Debug: Check if we are receiving the correct values
+    print("Received values - Email:", email, "Token:", token_type, "Status:", status, "Action:", action)
+
+    if not email or not token_type or token_type not in ALL_TOKENS:
+        return "Invalid data  , chatgpt issues", 400
+
+
+    # Load pending token requests
+    try:
+        pending_df = pd.read_csv("pending_tokens.csv")
+    except FileNotFoundError:
+        pending_df = pd.DataFrame(columns=["email", "token_type"])
+
+    # Remove the request from the pending list
+    pending_df = pending_df[(pending_df['email'] != email) | (pending_df['token_name'] != token_type)]
+    pending_df.to_csv("pending_tokens.csv", index=False)
+
+    # Load or create user data
+    try:
+        df = pd.read_csv("user_data.csv")
+    except FileNotFoundError:
+        df = pd.DataFrame(columns=["email", "tokens", "photos_uploaded", "events", "activity"])
+
+    found = False
+    for i, row in df.iterrows():
+        if row['email'] == email:
+            found = True
+
+            # Parse tokens
+            raw_tokens = row.get('tokens', '').strip()
+            try:
+                tokens = json.loads(raw_tokens.replace("'", '"')) if raw_tokens else {}
+            except json.JSONDecodeError:
+                tokens = {}
+
+            # Parse activity
+            activity = str(row.get('activity', '')).strip().lower()
+
+            if action == 'accept':
+                tokens[token_type] = tokens.get(token_type, 0) + 1
+                df.at[i, 'tokens'] = json.dumps(tokens)
+
+            df.at[i, 'activity'] = 'Token has been approved' if action == 'accept' else 'rejected'
+            break
+
+    if not found:
+        new_tokens = json.dumps({token_type: 1}) if action == 'accept' else json.dumps({})
+        df = df._append({
+            "email": email,
+            "tokens": new_tokens,
+            "photos_uploaded": 0,
+            "events": "",
+            "activity": 'Token has been Approved' if action == 'accept' else 'rejected'
+        }, ignore_index=True)
+
+    df.to_csv("user_data.csv", index=False)
+    success_message = f"Request {action}ed successfully!"
+
+    requests = load_requests()
+    return render_template('admin_panel.html', active_page='requests', requests=requests, success_message=success_message)
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)
