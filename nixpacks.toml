@@ -1,5 +1,13 @@
 [phases.setup]
-nixPkgs = ["cmake", "boost", "pkg-config", "python3", "python3Packages.dlib"]
+nixPkgs = [
+  "python3",
+  "python3Packages.pip",  # Ensures pip is installed
+  "cmake",
+  "boost",
+  "pkg-config",
+  "libjpeg",
+  "zlib"
+]
 
 [phases.install]
 cmds = ["pip install -r requirements.txt"]
