@@ -1,12 +1,13 @@
 [phases.setup]
 nixPkgs = [
   "python3",
-  "python3Packages.pip",  # Ensures pip is installed
+  "python3Packages.pip",
   "cmake",
-  "boost",
+  "gcc",         # C compiler
+  "g++",         # C++ compiler
   "pkg-config",
   "libjpeg",
   "zlib"
 ]
 
-
+[phases.install]
