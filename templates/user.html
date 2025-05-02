@@ -1,0 +1,515 @@
+<!-- templates/user.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Dashboard</title>
+  <link rel="stylesheet" href="/static/css/user.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Add jQuery -->
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="logo">PartyPix AI</div>
+    <div class="nav-links">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/events">Manage Events</a>
+      <a href="/token">Tokens</a>
+      <a href="/support">Need Support?</a>
+
+      <!-- User profile with image and dropdown -->
+      <div class="user-profile">
+        <!-- Profile image, can be changed to a dynamic user image -->
+        <img src="/static/images/pfpdefault.jpg" alt="User Photo" id="user-photo">
+        
+        <!-- Dropdown arrow indicator that will open the dropdown -->
+        <span class="dropdown-arrow" id="dropdown-arrow">▼</span>
+        
+        <!-- Dropdown menu -->
+        <div class="dropdown" id="dropdown-menu">
+          <a href="#">Profile Settings</a>
+          <a href="#">Account Settings</a>
+          <a href="{{ url_for('logout') }}">Log Out</a>  
+        </div>
+      </div>
+    </div>
+  </nav>
+
+{% if page == 'dashboard' %}
+<!-- Main Content Section -->
+<div class="main-content">
+  <!-- Welcome Section -->
+  <div class="welcome-section">
+    <h2>Welcome back, {{ session['username'] }}!</h2>
+    <div class="stats">
+      <div class="dash-token-list">
+        <div class="dash-token dash-silver">Silver: {{ tokens['Silver'] }}</div>
+        <div class="dash-token dash-gold">Gold: {{ tokens['Gold'] }}</div>
+        <div class="dash-token dash-platinum">Platinum: {{ tokens['Platinum'] }}</div>
+        <div class="dash-token dash-royal">Royal: {{ tokens['Royal'] }}</div>
+      </div>
+    </div>
+    <h3>Confused?? how to create your first event , click the button below!!</h3>
+    <padding></padding>
+    <a href="/support" class="create-event-btn"> Support</a>
+  </div>
+
+  <div class="manage-events" id="manage-events">
+    <h3>Your Events</h3>
+    {% for event in events %}
+      <div class="event-card">
+        <h4>{{ event.title }}</h4>
+        <p>Token Used: {{ event.token }}</p>
+        <a href="#">View Event</a>
+      </div>
+    {% endfor %}
+  </div>
+  
+
+</div>
+
+
+
+{% elif page == 'token' %}
+<div id="token-flash-modal" class="flash-modal-overlay">
+  <div class="flash-modal">
+    <span class="close-btn" onclick="closeFlashModal()">×</span>
+    <p id="flash-modal-message">{{ get_flashed_messages()[0] if get_flashed_messages() else '' }}</p>
+  </div>
+</div>
+
+<section class="tokens-section">
+  <h2>🎟️ Token Access</h2>
+  <p>
+    Select a token tier based on how many photos you want to upload. 
+    Submit your application for admin approval. 
+    <strong>Note:</strong> 1 token = 1 event.
+  </p>
+  
+  <div class="token-tiers">
+
+    <div class="token-card">
+      <h3>🥉 Silver</h3>
+      <p>📸 Upload Limit: 50 Photos</p>
+      <form action="/applytokens" method="POST">
+        <input type="hidden" name="tier_name" value="Silver">
+        <button type="submit" class="apply-button">Apply for Silver</button>
+      </form>
+    </div>
+
+    <div class="token-card">
+      <h3>🥈 Gold</h3>
+      <p>📸 Upload Limit: 100 Photos</p>
+      <form action="/applytokens" method="POST">
+        <input type="hidden" name="tier_name" value="Gold">
+        <button type="submit" class="apply-button">Apply for Gold</button>
+      </form>
+    </div>
+
+    <div class="token-card">
+      <h3>💎 Diamond</h3>
+      <p>📸 Upload Limit: 250 Photos</p>
+      <form action="/applytokens" method="POST">
+        <input type="hidden" name="tier_name" value="Diamond">
+        <button type="submit" class="apply-button">Apply for Diamond</button>
+      </form>
+    </div>
+
+    <div class="token-card">
+      <h3>👑 Platinum</h3>
+      <p>📸 Upload Limit: 400 Photos</p>
+      <form action="/applytokens" method="POST">
+        <input type="hidden" name="tier_name" value="Platinum">
+        <button type="submit" class="apply-button">Apply for Platinum</button>
+      </form>
+    </div>
+
+    <div class="token-card">
+      <h3>🌌 Royal</h3>
+      <p>📸 Upload Limit: 600 Photos</p>
+      <form action="/applytokens" method="POST">
+        <input type="hidden" name="tier_name" value="Royal">
+        <button type="submit" class="apply-button">Apply for Royal</button>
+      </form>
+    </div>
+
+  </div>
+  {{ token_status_display | safe }}
+</section>
+
+
+
+
+
+{% elif page == 'events' %}
+<div id="eve-container">
+  <h1>📁 My Events</h1>
+  <p>All your special moments in one place.</p>
+
+  {% if message %}
+    <div style="color: lightgreen;">{{ message }}</div>
+  {% elif error %}
+    <div style="color: red;">{{ error }}</div>
+  {% endif %}
+  <div style="display: flex; justify-content: flex-end; margin-top: 30px; margin-bottom: 40px;">
+    <a href="/events?show_form=1" id="eve-create-button">➕ Create Event</a>
+  </div>
+
+
+  <div id="eve-list">
+    {% if events %}
+      {% for event in events %}
+        <div class="eve-card">
+          <h3>{{ event.title }}</h3>
+          <p>{{ event.desc }}</p>
+          <p style="font-size: 0.85rem; color: #999;">Token used: {{ event.token }} | ID: {{ event.id }}</p>
+          <p style="font-size: 0.85rem; color: #999;">Photo_uploaded: {{ event.photo_uploaded }} </p>
+          <div class="eve-actions">
+            <a href="/events/view/{{ event.id }}">
+              <button onclick="openEventModal('{{ event.id }}')">👁 View</button>
+            </a>
+            
+
+            
+            <!-- Rename trigger -->
+            <button onclick="openRenameModal('{{ event.id }}')">✏ Rename</button>
+
+
+
+            <!-- Delete -->
+            <form action="/delete_event/{{ event.id }}" method="POST" style="display:inline;">
+              <button type="submit" onclick="return confirm('Are you sure you want to delete this event?')">🗑 Delete</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>You haven't created any events yet.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Rename Modal -->
+
+<div id="rename-popup-overlay" class="popup-overlay" style="display:none;"></div>
+
+<!-- Rename Popup Box -->
+<div id="rename-popup-box" class="popup-box" style="display:none;">
+  <form method="POST" id="renameForm">
+    <h2>✏️ Rename Event</h2>
+    <label for="new_title" style="color:#ccc;">New Event Title:</label>
+    <input type="text" name="new_title" required class="rename-input">
+
+    <div style="margin-top:20px;">
+      <button type="submit" class="actionrename-btn">✅ Rename</button>
+      <button type="button" class="closerename-btn" onclick="closeRenameModal()">❌ Cancel</button>
+    </div>
+  </form>
+</div>
+
+
+
+
+{% if show_form %}
+<div id="eve-overlay" style="display:flex">
+  <div id="eve-popup">
+    <h2>Create a New Event</h2>
+    <form method="POST" action="/create_event" id="eve-form">
+      <input type="text" placeholder="Event Name" name="eve_name" required>
+      <textarea placeholder="Event Description (optional)" name="eve_desc"></textarea>
+      <select name="eve_token" required>
+        <option value="" disabled selected>Select a Token</option>
+        {% for token, count in token_data.items() if count > 0 %}
+          <option value="{{ token }}">{{ token }} ({{ count }})</option>
+        {% endfor %}
+      </select>
+      <button type="submit" id="eve-create">Create Event</button>
+      <a href="/events" class="eve-close-btn">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% elif page == 'support' %}
+<section class="support-section">
+  <h3>How to Create and Share an Event</h3>
+  <p>Follow these steps to set up your event properly. If you need help, contact support at the bottom.</p>
+
+  <ol class="help-steps">
+    <li>Go to the <strong>Tokens</strong> section to get token for your event (its free).</li>
+    <li>Then, head over to <strong>Manage Events</strong>.</li>
+    <li>Click on <strong>Create Event</strong> and fill in your event details.</li>
+    <li><strong>Upload the photos </strong> of your event and you can add a theme picture also which will be shown to the guest .</li>
+    <li>After submitting, you’ll get a <strong>generated event link</strong>.</li>
+    <li>Copy the <strong>event password</strong> shown after creation.</li>
+    <li>Now, <strong>circulate the link and password</strong> to your guests.</li>
+  </ol>
+
+  <p>Still confused or need help? Our support team (AKA ME) has your back 👇</p>
+
+  <form class="support-form" method="POST" action="/supportloggedin">
+    <textarea name="contactlog" rows="1" readonly>{{ session['user'] }}</textarea>
+    <textarea name="messagelog" rows="4" placeholder="Describe your issue or question..."></textarea>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+    <div class="flash-messages">
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+    <button type="submit">Contact Support</button>
+  </form>
+</section>  
+
+{% endif %}
+
+
+
+
+
+
+
+
+{% if selected_event %}
+<div class="popup-overlay active" id="eventModal">
+  <div class="container">
+    <h1>🌸 {{ selected_event.title }}</h1>
+    <div class="event-meta">Token Used: <strong>{{ selected_event.token }}</strong> | ID: {{ selected_event.id }}</div>
+    <div class="event-desc">
+      Celebrate the joy of union with our captured moments. Upload more memories or share this album!
+    </div>
+
+    <!-- Upload Form -->
+    <form id="uploadForm" action="/upload_photo" method="POST" enctype="multipart/form-data">
+      <input type="file" name="photos" id="photoInput" multiple style="display: none;" onchange="submitUploadForm()" />
+      <!-- <input type="hidden" name="event_id" id="upload_event_id"> -->
+    </form>
+        <button class="action1-btn" onclick="triggerFileInput()">📤 Upload Photo</button>
+    <form action="/eventphoto" method="GET" target="_blank" style="display:inline;">
+          <button type="submit" class="action1-btn">🖼️ View Photos</button>
+     </form>
+        
+
+    <!-- Generate Link -->
+    <button class="action1-btn" onclick="openSharePopup()">🔗 Generate Share Link</button>
+
+<!-- Hidden Photo Grid -->
+  <div id="photoGrid" style="display: none; margin-top: 20px;">
+    <h2>📸 Uploaded Photos</h2>
+    {% if selected_event.photos %}
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px;">
+        {% for photo in selected_event.photos %}
+          <div style="background:#1a002a; padding:10px; border-radius:10px; box-shadow:0 4px 10px rgba(255,255,255,0.1);">
+            <img src="{{ url_for('static', filename='event_photos/' + selected_event.id + '/' + photo) }}" alt="photo" style="width: 100%; border-radius: 8px;" />
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p>No photos uploaded yet.</p>
+    {% endif %}
+  </div>
+
+
+    <!-- Close Modal -->
+    <button class="close1-btn" onclick="closeEventModal()">Close</button>
+  </div>
+
+  <!-- Share Link Popup Inside Modal -->
+  <div class="popup-overlay" id="sharePopup">
+    <div class="popup-box">
+      <h2>🔗 Share Link Generated!</h2>
+      <p>Here’s your event access link and password:</p>
+      <p><strong>Link:</strong> <code>http://127.0.0.1:5000/guest/{{ selected_event.id }}</code></p>
+      <p><strong>Password:</strong> <code>{{ selected_event.password or 'WD1234' }}</code></p>
+      <button class="close1-btn" onclick="closeSharePopup()">Close</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+{% endif %}
+
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="logo">PartyPix AI</div>
+      <p>Join the smartest way to relive your party moments. Upload, search, and relive your memories powered by AI.</p>
+      <div class="social-links">
+        <a href="https://www.instagram.com/swastikkaushal_/" target="_blank">
+          <img src="/static/images/instagram.svg" alt="Instagram">
+        </a>
+        <a href="https://discord.com/users/751334414914420767" target="_blank">
+          <img src="/static/images/discord.svg" alt="Discord">
+        </a>
+        <a href="https://github.com/SwastikKaushal1" target="_blank">
+          <img src="/static/images/github.svg" alt="GitHub">
+        </a>
+      </div>
+    </div>
+
+    <div class="footer-columns">
+      <div class="footer-col">
+        <h4>Navigation</h4>
+        <ul>
+          <li><a href="#">Home</a></li>
+          <li><a href="/about">How it works</a></li>
+          <li><a href="/features">About us</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 PartyPix AI. All rights reserved.</p>
+    <p class="made-by">Made with ❤️ by Swastik</p>
+  </div>
+</footer>
+
+
+  <script>
+    $(document).ready(function() {
+      $('#dropdown-arrow').click(function() {
+        $('#dropdown-menu').toggle(); // Toggle visibility of the dropdown
+      });
+
+      // Close the dropdown if clicked outside
+      $(document).click(function(event) {
+        if (!$(event.target).closest('.user-profile').length) {
+          $('#dropdown-menu').hide();
+        }
+      });
+    });
+  </script>
+
+<script>
+  function closeFlashModal() {
+    document.getElementById('token-flash-modal').style.display = 'none';
+  }
+
+  window.onload = function() {
+    const message = document.getElementById('flash-modal-message').innerText;
+    if (message.trim() !== "") {
+      document.getElementById('token-flash-modal').style.display = 'flex';
+    }
+  };
+</script>
+
+<script>
+  function openPopup() {
+    document.getElementById('eve-overlay').style.display = 'flex';
+  }
+
+  function closePopup() {
+    document.getElementById('eve-overlay').style.display = 'none';
+    document.getElementById('event-name').value = '';
+    document.getElementById('event-desc').value = '';
+    document.getElementById('selected-token').selectedIndex = 0;
+  }
+
+  function createEvent() {
+    const name = document.getElementById('event-name').value;
+    const desc = document.getElementById('event-desc').value;
+    const token = document.getElementById('selected-token').value;
+
+    if (!name || !token) {
+      alert("Please enter an event name and select a token.");
+      return;
+    }
+
+    alert(`Creating event:\nName: ${name}\nToken: ${token}\nDescription: ${desc}`);
+    closePopup(); // Replace with Flask integration logic later
+  }
+</script>
+<script>
+  function openRenameModal(eventId) {
+    const form = document.getElementById('renameForm');
+    form.action = '/rename_event/' + eventId;
+
+    document.getElementById('rename-popup-box').style.display = 'block';
+    document.getElementById('rename-popup-overlay').style.display = 'flex';
+  }
+
+  function closeRenameModal() {
+    document.getElementById('rename-popup-box').style.display = 'none';
+    document.getElementById('rename-popup-overlay').style.display = 'none';
+  }
+</script>
+
+
+<script>
+  function openEventModal(eventId, eventName, token, description) {
+  document.getElementById('eventModal').classList.add('active');
+
+  // Set event ID for upload
+  document.getElementById('upload_event_id').value = eventId;
+
+  // Also show values in modal if needed
+  document.getElementById('event-name').innerText = eventName;
+  document.getElementById('event-token').innerText = token;
+  document.getElementById('event-description').innerText = description;
+  }
+
+  function closeEventModal() {
+    document.getElementById('eventModal').classList.remove('active');
+    closeSharePopup(); // in case share is open
+  }
+
+  function openSharePopup() {
+    document.getElementById('sharePopup').classList.add('active');
+  }
+
+  function closeSharePopup() {
+    document.getElementById('sharePopup').classList.remove('active');
+  }
+
+  function triggerFileInput() {
+    document.getElementById('photoInput').click();
+  }
+
+  function submitUploadForm() {
+    document.getElementById('uploadForm').submit();
+  }
+</script>
+
+
+<script>
+  function togglePhotoGrid() {
+    const grid = document.getElementById('photoGrid');
+    if (grid.style.display === 'none' || grid.style.display === '') {
+      grid.style.display = 'block';
+    } else {
+      grid.style.display = 'none';
+    }
+  }
+</script>
+
+
+
+</body>
+</html>

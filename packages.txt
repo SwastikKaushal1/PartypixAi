@@ -1,0 +1,6 @@
+cmake
+build-essential
+libboost-all-dev
+libssl-dev
+libffi-dev
+python3-dev

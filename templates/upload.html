@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Upload Your Photo</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    /* Spinner styles */
+    .spinner {
+      display: none;
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #f7c35f;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      text-align: center;
+      color: #fff;
+      font-weight: 500;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container" style="text-align: center; padding-top: 120px;">
+    <h1>Upload Your Selfie</h1>
+    <form id="uploadForm" action="/upload" method="POST" enctype="multipart/form-data">
+      <input type="file" name="image" required><br><br>
+      <button type="submit" class="btn-primary">Find My Photos</button>
+    </form>
+
+    <!-- Spinner & Loading Message -->
+    <div class="spinner" id="spinner"></div>
+    <div class="loading-text" id="loadingText">Finding your memories...</div>
+  </div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const spinner = document.getElementById('spinner');
+    const loadingText = document.getElementById('loadingText');
+
+    form.addEventListener('submit', () => {
+      spinner.style.display = 'block';
+      loadingText.style.display = 'block';
+    });
+  </script>
+</body>
+</html>

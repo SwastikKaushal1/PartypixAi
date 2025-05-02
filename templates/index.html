@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FaceFinder AI</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+
+
+</head>
+<body>
+
+<!-- DELTE FROM HERE  --><!-- TO HERE  --><!-- TO HERE  --><!-- TO HERE  -->
+<!-- Mobile Navbar -->
+<nav class="mobile-navbar">
+  <div class="mobile-nav-header">
+    <div class="logo">PartyPix AI</div>
+    <div class="hamburger" onclick="toggleMobileMenu()">☰</div>
+  </div>
+  <div class="mobile-nav-links" id="mobileMenu">
+    <a href="#">Home</a>
+    <a href="#how-it-works">How It Works</a>
+    <a href="#about">About Us</a>
+    <a href="#contact">Contact Us</a>
+    <a href="#" onclick="openLogin()">Login</a>
+  </div>
+</nav>
+
+
+
+
+<!-- TO HERE  -->
+<!-- TO HERE  --><!-- TO HERE  --><!-- TO HERE  --><!-- TO HERE  -->
+
+
+
+  <nav class="navbar">
+    <div class="logo">PartyPix AI</div>
+    <div class="nav-links">
+      <a href="#">Home</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="#about">About us </a>
+      <a href="#contact">Contact Us</a>
+      <a href="#" class="login-btn" onclick="openLogin()">Login</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Upload your selfie — we’ll find your event memories.</h1>
+      <p>Tired of sending event photos to everyone? Let AI handle it. Guests can upload a selfie and instantly find all their photos from your event — no hassle, just magic.</p>
+      <div class="hero-buttons">
+        <a href="#how-it-works" class="btn-primary"><span>How it Works</span></a>
+        <a href="#about" class="btn-primary"><span>About Us</span></a>
+      </div>
+    </div>
+  </section>  
+
+  <section id="how-it-works" class="how-it-works">
+    <h2>How It Works</h2>
+    <div class="steps-container">
+      <div class="step">
+        <span class="step-number">1</span>
+        <h3>Host Uploads Photos</h3>
+        <p>The host uploads all event photos to our platform securely.</p>
+      </div>
+      <div class="step">
+        <span class="step-number">2</span>
+        <h3>Get Guest Link</h3>
+        <p>Our system generates a private link that the host can share with guests.</p>
+      </div>
+      <div class="step">
+        <span class="step-number">3</span>
+        <h3>Guests Upload a Selfie</h3>
+        <p>Each guest uploads a selfie to find their own photos instantly.</p>
+      </div>
+      <div class="step">
+        <span class="step-number">4</span>
+        <h3>Download Memories</h3>
+        <p>Guests can view and download all of their detected photos easily.</p>
+      </div>
+    </div>
+  </section>
+  
+  <section class="about-section" id="about">
+    <div class="about-container">
+      <div class="about-text">
+        <h2>About Me</h2>
+        <p>Hey, I'm Swastik 👋<br><br>
+           I created this platform to help hosts easily share photos with guests using the power of AI.
+           Just upload a selfie, and we'll do the rest! . This is just my basic simple project not a buisness or anything reach out to me if you want the code. So this is my test project so i wont charge you anything 
+        </p>
+      </div>
+      <div class="about-image">
+        <div class="image-glow-wrapper">
+          <div class="circle-bg"></div>
+          <img src="/static/images/me.png" alt="Swastik">
+        </div>
+      </div>
+        </section>
+
+  <section class="contact-section" id="contact">
+    <div class="contact-container">
+      <h2>Contact Us</h2>
+      <p>Have questions, suggestions, or just want to say hi? Drop a message below!</p>
+  
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <p class="flash {{ category }}">{{ message }}</p>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+  
+      <form class="contact-form" method="POST" action="/contact">
+        <input type="text" name="name" placeholder="Your Name" required>
+        <input type="email" name="email" placeholder="Your Email" required>
+        <textarea name="message" rows="5" placeholder="Your Message" required></textarea>
+        <button type="submit">Send Message</button>
+      </form>
+    </div>
+  </section>
+      
+
+<!-- Login Modal -->
+<div id="loginModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeLogin()">&times;</span>
+    <h2>Login to PartyPix</h2>
+
+
+  
+    <form method="POST" action="/login">
+      <label for ="email">Email</label>
+      <input type="email" name="email" id="email" placeholder="you@example.com" required>
+
+      <label for="password">Password</label>
+      <input type="password" name="password" id="password" placeholder="Your password" required>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flashes">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+      <button type="submit">Login</button>
+
+      <div class="extra-links">
+        <a href="#">Forgot Password?</a>
+        <a href="#" onclick="switchToRegister()">Register</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Register Modal -->
+<div id="registerModal" class="modal" >
+  <div class="modal-content">
+    <span class="close" onclick="closeRegister()">&times;</span>
+    <h2>Register on PartyPix</h2>
+
+
+    <form method="POST" action="/register">
+      <label for="register-email">Username</label>
+      <input type="text" name="username" id="register-username" placeholder="Choose a username" required>
+      <label for="register-email">Email</label>
+      <input type="email" name="email" id="register-email" placeholder="you@example.com" required>
+
+      <label for="register-password">Password</label>
+      <input type="password" name="password" id="register-password" placeholder="Create a password" required>
+
+      <label for="confirm-password">Confirm Password</label>
+      <input type="password" name="confirm_password" id="confirm-password" placeholder="Confirm your password" required>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flashes">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+      <button type="submit">Register</button>
+
+      <div class="extra-links">
+        <a href="#" onclick="switchToLogin()">Already have an account?</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+
+
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="logo">PartyPix AI</div>
+      <p>Join the smartest way to relive your party moments. Upload, search, and relive your memories powered by AI.</p>
+      <div class="social-links">
+        <a href="https://www.instagram.com/swastikkaushal_/" target="_blank">
+          <img src="/static/images/instagram.svg" alt="Instagram">
+        </a>
+        <a href="https://discord.com/users/751334414914420767" target="_blank">
+          <img src="/static/images/discord.svg" alt="Discord">
+        </a>
+        <a href="https://github.com/SwastikKaushal1" target="_blank">
+          <img src="/static/images/github.svg" alt="GitHub">
+        </a>
+      </div>
+    </div>
+
+    <div class="footer-columns">
+      <div class="footer-col">
+        <h4>Navigation</h4>
+        <ul>
+          <li><a href="#">Home</a></li>
+          <li><a href="/about">How it works</a></li>
+          <li><a href="/features">About us</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 PartyPix AI. All rights reserved.</p>
+    <p class="made-by">Made with ❤️ by Swastik</p>
+  </div>
+</footer>
+
+
+
+
+
+
+
+<!-- ----------------------------------------------------------------------------------------------------------------- -->
+  </body>
+  <script>
+    function openLogin() {
+      document.getElementById("loginModal").style.display = "flex";
+    }
+  
+    function closeLogin() {
+      document.getElementById("loginModal").style.display = "none";
+    }
+  
+    // Close modal when clicking outside the box
+    window.onclick = function(event) {
+      const modal = document.getElementById("loginModal");
+      if (event.target === modal) {
+        closeLogin();
+      }
+    };
+  </script>
+
+
+<script>
+  function openLogin() {
+    document.getElementById("loginModal").style.display = "flex";
+  }
+
+  function closeLogin() {
+  document.getElementById("loginModal").style.display = "none";
+
+  // Clear flash messages when closing the login modal
+  const flashContainer = document.querySelector('.flashes');
+  if (flashContainer) {
+    flashContainer.remove();
+  }
+}
+
+  function openRegister() {
+    document.getElementById("registerModal").style.display = "flex";
+    
+  }
+
+  function closeRegister() {
+  document.getElementById("registerModal").style.display = "none";
+
+  // Remove flash messages when register modal closes
+  const flashContainer = document.querySelector('.flashes');
+  if (flashContainer) {
+    flashContainer.remove();
+  }
+}
+
+  function switchToRegister() {
+    closeLogin();
+    openRegister();
+  }
+
+  function switchToLogin() {
+    closeRegister();
+    openLogin();
+  }
+
+  window.onclick = function (event) {
+    const loginModal = document.getElementById("loginModal");
+    const registerModal = document.getElementById("registerModal");
+
+    if (event.target === loginModal) closeLogin();
+    if (event.target === registerModal) closeRegister();
+  };
+
+
+  
+</script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    if (window.location.hash === '#loginModal') {
+      openLogin();  // ✅ your existing function
+    }
+
+    if (window.location.hash === '#registerModal') {
+      openRegister();
+    }
+  });
+</script>
+<script>
+  function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+  }
+</script>
+
+
+</html>

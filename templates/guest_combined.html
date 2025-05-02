@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ selected_event.title }} | PixAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #0f001a;
+      color: white;
+      font-family: 'Poppins', sans-serif;
+      padding: 40px;
+    }
+    h1 {
+      color: #d47aff;
+      text-align: center;
+    }
+    .event-meta {
+      text-align: center;
+      margin-top: -10px;
+      margin-bottom: 30px;
+      color: #aaa;
+    }
+    .password-form {
+      max-width: 400px;
+      margin: 0 auto 40px;
+      background: #1a002a;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px #3b1e5a;
+    }
+    input[type="password"],
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      margin-top: 10px;
+      background: #2d003f;
+      color: white;
+    }
+    .submit-btn,
+    .upload-button {
+      margin-top: 15px;
+      width: 100%;
+      background: #d47aff;
+      color: #0f001a;
+      font-weight: bold;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .submit-btn:hover,
+    .upload-button:hover {
+      background: #ff87e2;
+    }
+    .error {
+      color: #ff6b6b;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .message {
+      color: #aaa;
+      text-align: center;
+      margin-top: 20px;
+    }
+    .photos-section {
+      margin-top: 30px;
+      text-align: center;
+    }
+    .photos-section img {
+      width: 200px;
+      margin: 10px;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(255,255,255,0.1);
+    }
+    .upload-section {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .upload-btn {
+      background: #ff87e2;
+      color: #0f001a;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      border: none;
+      text-decoration: none;
+    }
+    .upload-btn:hover {
+      background: #d47aff;
+    }
+    .loading-msg {
+      color: #ff87e2;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 0, 26, 0.9);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .loading-spinner {
+    border: 6px solid #3b1e5a;
+    border-top: 6px solid #d47aff;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-text {
+    margin-top: 15px;
+    color: #ff87e2;
+    font-size: 1.1rem;
+  }
+
+  </style>
+</head>
+<body>
+
+  <h1>📸 {{ selected_event.title }}</h1>
+  <div class="event-meta">Event ID: <code>{{ selected_event.id }}</code></div>
+
+  {% if error %}
+    <div class="error">{{ error }}</div>
+  {% endif %}
+
+  {% if require_password %}
+    <form method="POST" class="password-form">
+      <label for="password">Enter event password:</label>
+      <input type="password" name="password" required />
+      <button type="submit" class="submit-btn">Unlock</button>
+    </form>
+  {% else %}
+    {% if not photo_uploaded %}
+      <div class="message">
+        Upload yours photo to find yours matching moments
+      </div>
+    {% endif %}
+
+    {% if not upload_disabled %}
+      <div class="upload-section">
+        <form method="POST" enctype="multipart/form-data">
+          <label for="guest_photo">Upload Your Photo:</label>
+          <input type="file" name="guest_photo" required>
+          <button class="upload-button" type="submit">Upload</button>
+        </form>
+      </div>
+    {% endif %}
+
+    {% if photos %}
+      <div class="photos-section">
+        <h2>Matching Photos</h2>
+
+        <a href="{{ url_for('download_all_photos', event_id=selected_event.id) }}" class="upload-btn" style="display: inline-block; margin-bottom: 20px;">
+          ⬇️ Download All Matching Photos
+        </a>
+    
+        <div>
+          {% for photo in photos %}
+            <img src="{{ url_for('static', filename='event_photos/' + selected_event['id'] + '/' + photo) }}" alt="Matched Photo">
+            <a href="{{ url_for('static', filename='event_photos/' + selected_event['id'] + '/' + photo) }}"
+            download="{{ photo }}" class="upload-btn" style="margin-top: 5px; font-size: 14px; padding: 5px 10px;">Download</a>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  {% endif %}
+
+
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Matching your photos… May take time ... hosted on free server</div>
+  </div>
+  
+  <script>
+    const uploadForm = document.querySelector('.upload-section form');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+  
+    if (uploadForm) {
+      uploadForm.addEventListener('submit', () => {
+        loadingOverlay.style.display = 'flex';
+      });
+    }
+  </script>
+</body>
+</html>

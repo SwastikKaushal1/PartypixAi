@@ -1,0 +1,23 @@
+nixPkgs = ["python311Full", "cmake", "g++", "gcc", "make", "pkgconfig"]
+
+[phases.setup]
+cmds = [
+  "echo 'Setting up cmake symlink...'",
+  "ln -sf $(which cmake) /usr/local/bin/cmake",
+  "echo 'cmake symlink created!'"
+]
+
+[phases.install]
+cmds = [
+  "echo 'Installing dependencies from requirements.txt...'",
+  "pip3 install -r requirements.txt",
+  "echo 'Checking Flask installation...'",
+  "python3 -c 'import flask; print(flask.__version__)' || echo 'Flask not installed'"
+]
+
+[phases.start]
+cmds = [
+  "echo 'Current Python Path: $(which python3)'",
+  "echo 'Starting the application...'",
+  "python3 app.py"
+]
